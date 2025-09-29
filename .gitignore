@@ -1,0 +1,7 @@
+.env
+data/maildir/
+data/certs/**
+data/acme-data/**
+data/postfix/maps/*.db
+data/postfix/maps/*.lmdb
+!**/.gitkeep

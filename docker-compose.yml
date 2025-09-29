@@ -1,0 +1,119 @@
+x-logging: &logging
+  logging:
+    driver: "json-file"
+    options:
+      max-size: "50m"
+      max-file: "5"
+
+services:
+
+   postfix:
+     container_name: postfix
+     build:
+       context: ./docker/postfix
+     depends_on:
+       - "dovecot"
+       - "filter"
+     <<: *logging
+     restart: always
+     env_file: .env
+     volumes:
+       - ./data/postfix/maps:/etc/postfix/maps:rw
+       - ./data/certs:/etc/ssl/local:ro
+       - postfix-spool:/var/spool/postfix
+     ports:
+       - "25:25"
+       - "587:587"
+       - "20587:20587"
+
+   dovecot:
+     container_name: dovecot
+     build:
+       context: ./docker/dovecot
+     <<: *logging
+     restart: always
+     env_file: .env
+     volumes:
+       - ./data/maildir:/var/vmail:rw
+       - ./data/certs:/etc/ssl/local:ro
+     ports:
+       - "4190:4190"
+       - "143:143"
+       - "993:993"
+       - "110:110"
+       - "995:995"
+
+   filter:
+     container_name: filter
+     build:
+       context: ./docker/filter
+     <<: *logging
+     restart: always
+     env_file: .env
+     volumes:
+       - data-filter:/var/lib/rspamd
+       - ./data/filter/dkim:/media/dkim
+     links:
+       - virus:virus.local
+
+   virus:
+     container_name: virus
+     build:
+       context: ./docker/virus
+     <<: *logging
+     restart: always
+     env_file: .env
+     volumes:
+       - data-virusdb:/var/lib/clamav
+
+   redis:
+     container_name: redis
+     image: redis:alpine
+     <<: *logging
+     restart: always
+     command: ["redis-server", "--appendonly", "yes"]
+     volumes:
+       - data-redis:/data
+
+   acme:
+     container_name: acme-ssl
+     build: 
+       context: ./docker/acme
+     volumes:
+       - ./data/acme-data:/acme.sh
+       - ./data/certs:/certs
+       - /var/run/docker.sock:/var/run/docker.sock:ro
+     environment:
+       - CF_Token=${CF_Token}
+       - ACME_EMAIL=${ACME_EMAIL}
+       - WEBHOOK_URL=${WEBHOOK_URL:-}
+       - DOMAIN=${MAILNAME}
+     command: daemon
+     restart: unless-stopped
+     env_file:
+       - .env
+
+   acme-init:
+     build: 
+       context: ./docker/acme
+       dockerfile: Dockerfile
+     volumes:
+       - ./data/acme-data:/acme.sh
+       - ./data/certs:/certs
+     environment:
+       - CF_Token=${CF_Token}
+       - ACME_EMAIL=${ACME_EMAIL}
+     command: ["issue", "${MAILNAME}"]
+     profiles: ["init"]
+     env_file:
+       - .env
+        
+volumes:
+  postfix-spool:
+    name: postfix-spool-data
+  data-virusdb:
+    name: data-virusdb
+  data-filter:
+    name: data-filter
+  data-redis:
+    name: data-redis
