@@ -2,8 +2,8 @@
 
 if [ "${FILTER_VIRUS}" = "false" ]
 then
-    echo "Virus filtering is disabled, exiting."
-    exit 0
+    echo "Virus filtering is disabled, sleeping..."
+    exec sleep infinity
 fi
 
 /usr/bin/freshclam -d -l /dev/stdout &

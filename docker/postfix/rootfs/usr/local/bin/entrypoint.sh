@@ -55,6 +55,7 @@ postconf -e "virtual_mailbox_maps="
 postconf -e "canonical_maps=hash:${POSTFIX_DATA}/canonical_maps"
 postconf -e "virtual_transport=lmtp:inet:${MDA_HOST}:2003"
 postconf -e "header_checks=pcre:/etc/postfix/maps/header_checks_client"
+postconf -e "sender_bcc_maps=hash:/etc/postfix/sender_bcc"
 
 # ==============================
 # SASL (Postfix -> Dovecot)
@@ -159,7 +160,7 @@ done
 # ==============================
 # Генеруємо hash карти
 # ==============================
-for f in aliases canonical_maps virtual_alias_maps virtual_mailbox_maps access header_checks_client; do
+for f in aliases canonical_maps virtual_alias_maps virtual_mailbox_maps access header_checks_client sender_bcc; do
     if [ -f "${POSTFIX_DATA}/$f" ]; then
         postmap "${POSTFIX_DATA}/$f"
     fi
