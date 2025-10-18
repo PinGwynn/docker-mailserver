@@ -55,7 +55,7 @@ postconf -e "virtual_mailbox_maps="
 postconf -e "canonical_maps=hash:${POSTFIX_DATA}/canonical_maps"
 postconf -e "virtual_transport=lmtp:inet:${MDA_HOST}:2003"
 postconf -e "header_checks=pcre:/etc/postfix/maps/header_checks_client"
-postconf -e "sender_bcc_maps=hash:/etc/postfix/sender_bcc"
+postconf -e "sender_bcc_maps=hash:/etc/postfix/maps/sender_bcc"
 
 # ==============================
 # SASL (Postfix -> Dovecot)
